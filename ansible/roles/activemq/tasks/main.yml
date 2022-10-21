@@ -41,7 +41,6 @@
     dest: /etc/init.d/activemq
 
 - name: Start activemq
-  service:
-    name: activemq
-    state: started
+  shell: "sudo service activemq start"
+
 
