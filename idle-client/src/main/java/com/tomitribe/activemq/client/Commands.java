@@ -29,6 +29,8 @@ import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -357,6 +359,29 @@ public class Commands {
             }
 
         } catch (JMSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Command("hold-connections")
+    public void holdConnections(@Required @Option("uri") final String uri,
+                                @Required @Option("dest") final String destination,
+                                @Default("10") @Option("connection-count") final Integer connectionCount,
+                                @Option("username") final String username,
+                                @Option("password") final String password) {
+
+        final ConnectionFactory cf = getConnectionFactory(uri);
+        final List<Connection> connectionList = new ArrayList<>();
+
+        try {
+            for (int i = 0; i < connectionCount; i++) {
+                final Connection connection = getConnection(cf, username, password, null);
+                connection.start();
+                connectionList.add(connection);
+            }
+
+            new CountDownLatch(1).wait();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
