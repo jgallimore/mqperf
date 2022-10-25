@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  environment:
+    AWS_REGION: "{{ aws_region }}"
+
+  tasks:
+  - name: Create S3 bucket
+    aws_s3:
+      bucket: "{{ s3_bucket }}"
+      mode: create
+      region: "{{ aws_region }}"

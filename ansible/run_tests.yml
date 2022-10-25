@@ -2,7 +2,7 @@
 
 - hosts: receiver:sender
   vars:
-    test_name: "redistreams-1thread.json.j2"
+    test_name: "activemq-25threads.json.j2"
   tasks:
   - name: Set facts for env variables
     set_fact:
