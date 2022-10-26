@@ -28,10 +28,12 @@ redistreams_slave2_port: 6382
 
 storage_fs_type: ext4
 storage_device: /dev/nvme1n1
-ec2_instance_type: r5.2xlarge
+ec2_instance_type:  t2.small
 
 nats_version: v0.19.0
 
 activemq_build_sources_dir: "{{ playbook_dir }}/../activemq"
 activemq_build_version: "5.18.0-SNAPSHOT"
 activemq_build_artifact_path: "{{ activemq_build_sources_dir }}/assembly/target/apache-activemq-{{ activemq_build_version }}-bin.tar.gz"
+
+activemq_client_sources_dir: "{{ playbook_dir }}/../idle-client"

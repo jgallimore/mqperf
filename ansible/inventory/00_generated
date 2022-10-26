@@ -12,6 +12,8 @@
 
 [tag_group_Activemq]
 
+[tag_group_Client]
+
 [tag_group_Artemis]
 
 [tag_group_Eventstore]
