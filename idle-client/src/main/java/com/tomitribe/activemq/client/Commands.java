@@ -64,7 +64,12 @@ public class Commands {
                         @Option("connections") @Default("1") final Integer connections) throws Exception {
 
         final CountDownLatch latch = new CountDownLatch(connections);
+        startConsumerThreads(uri, destination, username, password, selector, client, connections);
+        latch.await(1, TimeUnit.HOURS);
+    }
 
+    private void startConsumerThreads(final String uri, final String destination, final String username, final String password,
+                                      final String selector, final String client, final Integer connections) {
         final Runnable r = () -> {
             final ConnectionFactory cf = getConnectionFactory(uri);
 
@@ -100,16 +105,52 @@ public class Commands {
             } catch (JMSException e) {
                 e.printStackTrace();
             }
-
-            latch.countDown();
         };
 
         for (int i = 0; i < connections; i++) {
             new Thread(r).start();
         }
+    }
 
-        latch.await(1, TimeUnit.HOURS);
+    @Command("produce-and-consume")
+    public void produceAndConsume(@Required @Option("uri") final String uri,
+                        @Required @Option("dest") final String destination,
+                        @Option("username") final String username,
+                        @Option("password") final String password,
+                        @Option("connections") @Default("1") final Integer connections) throws Exception {
 
+        // should just generate a lot of noise
+        final CountDownLatch latch = new CountDownLatch(connections);
+        startConsumerThreads(uri, destination, username, password, null, null, connections);
+        startProducerThreads(uri, destination, username, password, connections);
+        latch.await();
+    }
+
+    private void startProducerThreads(String uri, String destination, String username, String password, Integer connections) {
+        final Runnable r = () -> {
+            final ConnectionFactory cf = getConnectionFactory(uri);
+
+            try (final Connection conn = getConnection(cf, username, password, null);
+                 final Session sess = conn.createSession(false, Session.CLIENT_ACKNOWLEDGE)) {
+
+                conn.start();
+                Destination dest = getDestination(uri, destination);
+
+                final String payload = createRandomPayload(10240);
+                final MessageProducer producer = sess.createProducer(dest);
+
+                while (true) {
+                    final TextMessage textMessage = sess.createTextMessage(payload);
+                    producer.send(textMessage);
+                }
+            } catch (JMSException e) {
+                e.printStackTrace();
+            }
+        };
+
+        for (int i = 0; i < connections; i++) {
+            new Thread(r).start();
+        }
     }
 
     @Command("bad-consumer")
@@ -386,6 +427,8 @@ public class Commands {
         }
     }
 
+
+
     private String createRandomPayload(final Integer payloadSize) {
         final Random random = new Random();
         final StringBuilder sb = new StringBuilder(payloadSize);
@@ -398,7 +441,6 @@ public class Commands {
                 sb.append(DATA, offset, remaining);
                 remaining = 0;
             } else {
-                System.out.println(String.format("Size: %d, offset: %d, length: %d, end %d", DATA.length, offset, (DATA.length - offset - 1), offset + (DATA.length - offset - 1)));
                 sb.append(DATA, offset, (DATA.length - offset));
                 remaining -= (DATA.length - offset);
             }
