@@ -1,0 +1,20 @@
+---
+- name: Update all packages
+  shell: "sudo yum update -y"
+
+- name: Installs MariaDB
+  shell: "sudo yum install mariadb-server -y"
+
+- name: Copy setup script
+  template:
+    src: setup.sql.j2
+    dest: /tmp/setup.sql
+
+- name: Start MariaDB
+  shell: "sudo systemctl start mariadb"
+
+- name: Enable MariaDB
+  shell: "sudo systemctl enable mariadb"
+
+- name: Configure MariaDB
+  shell: "sudo mysql -sfu root < /tmp/setup.sql"

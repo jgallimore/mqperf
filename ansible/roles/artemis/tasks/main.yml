@@ -133,8 +133,6 @@
     - "{{ artemis_broker_master_3 }}"
 
 - name: Copy broker.xml.j2 to master
-  run_once: true
-  delegate_to: "{{ item }}"
   template:
     src=broker.xml.j2
     dest=/opt/{{ artemis_name }}-broker/etc/broker.xml
