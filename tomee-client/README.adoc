@@ -1,0 +1,47 @@
+= Simple JMS Client
+
+The uses the Crest command line tool to create a consumer and a producer of JMS text based messages.
+
+
+=== Dependencies
+
+A Running ActiveMQ 5.10.x. Server at the <activeMQ-address>:<port>.
+
+
+=== ActiveMQ connector configuration
+
+To add http connector support, not active by default, you need to place on the .../lib folder the optional lib:
+`.../lib/optional/activemq-http-5.15.8.jar`.
+
+Then, open .../conf/activemq.xml and add the connector configuration. Add this to the `<transportConnectors>` section:
+
+`<transportConnector name="http" uri="http://0.0.0.0:9090?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600" />`
+
+This will listen to all interfaces (0.0.0.0) on port 9090 and will add DOS protection by limiting the number of connections
+to 1000 and the maximum payload size to 100MB.
+
+
+=== Usage Examples
+
+By default you can add TCP based communication:
+
+`java -jar target/sample-client-1.0-SNAPSHOT.jar produce --uri=tcp://<activeMQ-address>:61616/ --dest=queue://test --count=2 --message="Test"`
+
+Consume messages:
+
+`java -jar target/sample-client-1.0-SNAPSHOT.jar consume --uri=tcp://<activeMQ-address>:61616/ --dest=queue://test`
+
+For http based communication:
+
+Produce messages:
+
+`java -jar target/sample-client-1.0-SNAPSHOT.jar produce --uri=http://<activeMQ-address>:<http port>/ --dest=queue://test --count=2 --message="Test"`
+
+Consume messages:
+
+`java -jar target/sample-client-1.0-SNAPSHOT.jar consume --uri=http://<activeMQ-address>:<http port>/ --dest=queue://test`
+
+You can switch the transport protocol in the url.
+
+
+

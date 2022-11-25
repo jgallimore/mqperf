@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Tomitribe Confidential
+  ~
+  ~ Copyright Tomitribe Corporation. 2020
+  ~
+  ~ The source code for this program is not published or otherwise divested
+  ~ of its trade secrets, irrespective of what has been deposited with the
+  ~ U.S. Copyright Office.
+  -->
+<resources>
+    <Resource id="Sender" class-name="org.superbiz.jms.SenderBean">
+        threads = 10
+    </Resource>
+</resources>
