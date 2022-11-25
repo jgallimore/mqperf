@@ -74,7 +74,7 @@ public class Commands {
             final ConnectionFactory cf = getConnectionFactory(uri);
 
             try (final Connection conn = getConnection(cf, username, password, client);
-                 final Session sess = conn.createSession(false, Session.CLIENT_ACKNOWLEDGE)) {
+                 final Session sess = conn.createSession(false, Session.AUTO_ACKNOWLEDGE)) {
 
                 conn.start();
                 Destination dest = getDestination(uri, destination);

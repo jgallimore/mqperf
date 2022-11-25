@@ -37,3 +37,4 @@ activemq_build_version: "5.18.0-SNAPSHOT"
 activemq_build_artifact_path: "{{ activemq_build_sources_dir }}/assembly/target/apache-activemq-{{ activemq_build_version }}-bin.tar.gz"
 
 activemq_client_sources_dir: "{{ playbook_dir }}/../idle-client"
+tomee_client_sources_dir: "{{ playbook_dir }}/../tomee-client"
