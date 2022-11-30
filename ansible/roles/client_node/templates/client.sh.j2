@@ -2,7 +2,7 @@
 
 start() {
 	echo "Starting client ..."
-	HOST_ID={{ play_hosts.index(inventory_hostname) }} java -Djavax.net.ssl.trustStore=/tmp/broker.ks -Djavax.net.ssl.trustStorePassword=activemq -jar /tmp/client.jar produce-and-consume --connections=1 "--uri=failover:({{ groups['activemq']|map('extract', hostvars, 'ec2_private_ip_address') | map('regex_replace','^(.*)$','ssl://\\1:61616?socket.verifyHostName=false') | list | join(',') }})" --dest=topic://TEST1 > /tmp/client.log 2>&1 &
+	HOST_ID={{ play_hosts.index(inventory_hostname) }} java -Djavax.net.ssl.trustStore=/tmp/broker.ks -Djavax.net.ssl.trustStorePassword=activemq -jar /tmp/client.jar produce-and-consume --connections=5 "--uri=failover:({{ groups['activemq']|map('extract', hostvars, 'ec2_private_ip_address') | map('regex_replace','^(.*)$','ssl://\\1:61616?socket.verifyHostName=false') | list | join(',') }})" --dest=queue://TEST1 > /tmp/client.log 2>&1 &
 }
 
 stop() {

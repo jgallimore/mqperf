@@ -7,11 +7,11 @@
     region: "{{ aws_region }}"
   delegate_to: 127.0.0.1
 
-- name: Build TomEE Client artifact
-  command: mvn -DskipTests clean install tomee:build
+- name: Build ActiveMQ Client artifact
+  command: mvn -DskipTests clean install
   args:
-    chdir: "{{ tomee_client_sources_dir }}"
-    creates: "{{ tomee_client_artifact_path }}"
+    chdir: "{{ activemq_client_sources_dir }}"
+    creates: "{{ activemq_client_artifact_path }}"
   delegate_to: 127.0.0.1
 
 - name: Upload keystore to S3
@@ -27,8 +27,8 @@
   aws_s3:
     bucket: "{{ s3_bucket }}"
     mode: put
-    object: /jars/client.zip
-    src: "{{ tomee_client_artifact_path }}"
+    object: /jars/client.jar
+    src: "{{ activemq_client_artifact_path }}"
     region: "{{ aws_region }}"
   delegate_to: 127.0.0.1
   
@@ -54,7 +54,7 @@
     aws_access_key: "{{ aws_access }}"
     aws_secret_key: "{{ aws_secret }}"
   with_items:
-    - "client.zip"
+    - "client.jar"
     - "broker.ks"
 
 - name: Prepare start/stop/status script

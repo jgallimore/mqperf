@@ -80,7 +80,7 @@
             http://activemq.apache.org/persistence.html
         -->
 		<persistenceAdapter> 
-			<jdbcPersistenceAdapter dataSource="#mysql-ds" lockKeepAlivePeriod="10000">
+			<jdbcPersistenceAdapter dataSource="#mysql-ds" lockKeepAlivePeriod="5000">
 				<locker>
                     <lease-database-locker lockAcquireSleepInterval="10000"/>
                 </locker>
