@@ -4,4 +4,4 @@
   shell: "sudo yum-config-manager --enable extras"
 
 - name: Install Java 11 via amazon-linux-extras packages
-  shell: "sudo amazon-linux-extras install java-openjdk11 -y"
+  shell: "sudo amazon-linux-extras install java-openjdk11 -y && sudo yum install java-11-openjdk -y"

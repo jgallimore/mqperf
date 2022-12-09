@@ -3,7 +3,7 @@
 - hosts: 127.0.0.1
   connection: local
   roles:
-  - { role: ec2_instance, count: 10, ec2_groups: [ 'ssh_access', 'default' ], aws_instance_type: "{{ ec2_instance_type }}", ec2_tag_group: Client }
+  - { role: ec2_instance, count: 5, ec2_groups: [ 'ssh_access', 'default' ], aws_instance_type: "{{ ec2_instance_type }}", ec2_tag_group: Client }
 
 - hosts: client
   roles:

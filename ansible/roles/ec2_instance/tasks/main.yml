@@ -17,6 +17,9 @@
     instance_tags:
       group: "{{ ec2_tag_group }}"
       kind: "mqperf-instance"
+    volumes:
+     - device_name: "/dev/xvda"
+       volume_size: "{{ root_volume_size }}"
   register: ec2
 
 - name: Wait for SSH to come up

@@ -1,6 +1,7 @@
 storage_path: /opt/prometheus
 receivers: "{{ groups['receiver'] }}"
 senders: "{{ groups['sender'] }}"
+activemqs: "{{ groups['activemq'] }}"
 prometheus_instance: "{{ groups['prometheus'][0] }}"
 prometheus_image_tag: v2.28.0
 prometheus_port: 9090

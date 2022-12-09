@@ -20,3 +20,6 @@ scrape_configs:
 {% for sender in senders %}
         - "{{hostvars[sender]['ec2_private_ip_address']}}:{{ mqperf_scrape_port}}"
 {% endfor %}
+{% for activemq in activemqs %}
+        - "{{hostvars[activemq]['ec2_private_ip_address']}}:8161"
+{% endfor %}

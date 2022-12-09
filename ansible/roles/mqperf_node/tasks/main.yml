@@ -23,15 +23,15 @@
   delegate_to: 127.0.0.1
   register: assembly
 
-- name: Upload deps artifact to S3
-  aws_s3:
-    bucket: "{{ s3_bucket }}"
-    mode: put
-    object: /jars/mqperf-assembly-deps.jar
-    src: "{{ mqperf_deps_artifact_path }}"
-    region: "{{ aws_region }}"
-  delegate_to: 127.0.0.1
-  when: deps_assembly.changed
+# - name: Upload deps artifact to S3
+#   aws_s3:
+#     bucket: "{{ s3_bucket }}"
+#     mode: put
+#     object: /jars/mqperf-assembly-deps.jar
+#     src: "{{ mqperf_deps_artifact_path }}"
+#     region: "{{ aws_region }}"
+#   delegate_to: 127.0.0.1
+#   when: deps_assembly.changed
 
 - name: Upload artifact to S3
   aws_s3:
@@ -42,6 +42,15 @@
     region: "{{ aws_region }}"
   delegate_to: 127.0.0.1
   when: assembly.changed
+
+- name: Upload keystore to S3
+  aws_s3:
+    bucket: "{{ s3_bucket }}"
+    mode: put
+    object: /jars/broker.ks
+    src: broker.ks
+    region: "{{ aws_region }}"
+  delegate_to: 127.0.0.1
 
 - name: Install botocore
   become: yes
@@ -59,14 +68,15 @@
   aws_s3:
     bucket: "{{ s3_bucket }}"
     mode: get
-    object: "/jars/{{ item }}.jar"
-    dest: "/tmp/{{ item }}.jar"
+    object: "/jars/{{ item }}"
+    dest: "/tmp/{{ item }}"
     region: "{{ aws_region }}"
     aws_access_key: "{{ aws_access }}"
     aws_secret_key: "{{ aws_secret }}"
   with_items:
-    - "mqperf-assembly-deps"
-    - "mqperf-assembly"
+    - "mqperf-assembly-deps.jar"
+    - "mqperf-assembly.jar"
+    - "broker.ks"
 
 - name: Prepare start/stop/status script
   template:

@@ -136,7 +136,7 @@ public class Commands {
                 conn.start();
                 Destination dest = getDestination(uri, destination);
 
-                final String payload = createRandomPayload(10240);
+                final String payload = createRandomPayload(1024);
                 final MessageProducer producer = sess.createProducer(dest);
 
                 while (true) {
@@ -187,7 +187,7 @@ public class Commands {
         final ConnectionFactory cf = getConnectionFactory(uri);
 
         try (final Connection conn = getConnection(cf, username, password, null);
-             final Session sess = conn.createSession(false, Session.CLIENT_ACKNOWLEDGE)) {
+             final Session sess = conn.createSession(false, Session.AUTO_ACKNOWLEDGE)) {
 
             conn.start();
             Destination dest = getDestination(uri, destination);
