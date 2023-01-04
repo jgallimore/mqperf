@@ -78,34 +78,6 @@
         to_port: "{{ prometheus_port }}"
         cidr_ip: "{{ all_cidr }}"
 
-- name: Network setup - RabbitMQ Security Group
-  ec2_group:
-    name: "rabbitmq_access"
-    description: "rabbitmq_access"
-    vpc_id: "{{ vpc_net }}"
-    region: "{{ aws_region }}"
-    rules:
-      - proto: tcp
-        from_port: "{{ rabbitmq_port }}"
-        to_port: "{{ rabbitmq_port }}"
-        cidr_ip: "{{ all_cidr }}"
-
-- name: Network setup - RocketMQ Security Group
-  ec2_group:
-    name: "rocketmq_access"
-    description: "rocketmq_access"
-    vpc_id: "{{ vpc_net }}"
-    region: "{{ aws_region }}"
-    rules:
-      - proto: tcp
-        from_port: "{{ rocketmq_name_server_port }}"
-        to_port: "{{ rocketmq_name_server_port }}"
-        cidr_ip: "{{ all_cidr }}"
-      - proto: tcp
-        from_port: "{{ rocketmq_broker_port_main }}"
-        to_port: "{{ rocketmq_broker_port_main }}"
-        cidr_ip: "{{ all_cidr }}"
-
 - name: Network setup - ActiveMQ Security Group
   ec2_group:
     name: "activemq_access"
@@ -116,54 +88,6 @@
       - proto: tcp
         from_port: "{{ activemq_port }}"
         to_port: "{{ activemq_port }}"
-        cidr_ip: "{{ all_cidr }}"
-
-- name: Network setup - ActiveMQ Artemis Security Group
-  ec2_group:
-    name: "activemq_artemis_access"
-    description: "activemq_artemis_access"
-    vpc_id: "{{ vpc_net }}"
-    region: "{{ aws_region }}"
-    rules:
-      - proto: tcp
-        from_port: "{{ activemq_artemis_jolokia_port }}"
-        to_port: "{{ activemq_artemis_jolokia_port }}"
-        cidr_ip: "{{ all_cidr }}"
-
-- name: Network setup - EventStore Security Group
-  ec2_group:
-    name: "eventstore_access"
-    description: "eventstore_access"
-    vpc_id: "{{ vpc_net }}"
-    region: "{{ aws_region }}"
-    rules:
-      - proto: tcp
-        from_port: "{{ eventstore_port }}"
-        to_port: "{{ eventstore_port }}"
-        cidr_ip: "{{ all_cidr }}"
-
-- name: Network setup - Redpanda Security Group
-  ec2_group:
-    name: "redpanda_access"
-    description: "redpanda_access"
-    vpc_id: "{{ vpc_net }}"
-    region: "{{ aws_region }}"
-    rules:
-      - proto: tcp
-        from_port: "{{ redpanda_port }}"
-        to_port: "{{ redpanda_port }}"
-        cidr_ip: "{{ all_cidr }}"
-
-- name: Network setup - Redistreams Security Group
-  ec2_group:
-    name: "redistreams_access"
-    description: "redistreams_access"
-    vpc_id: "{{ vpc_net }}"
-    region: "{{ aws_region }}"
-    rules:
-      - proto: tcp
-        from_port: "{{ redistreams_master_port }}"
-        to_port: "{{ redistreams_slave2_port }}"
         cidr_ip: "{{ all_cidr }}"
 
 - name: Create an EC2 key

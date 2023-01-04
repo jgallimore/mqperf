@@ -120,6 +120,9 @@
     dest: /etc/init.d/activemq
 
 - name: Start activemq
+  shell: "sudo chmod 400 /opt/activemq/conf/jmx.*"
+
+- name: Start activemq
   shell: "sudo service activemq start"
 
 
