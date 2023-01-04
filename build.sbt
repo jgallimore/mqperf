@@ -32,7 +32,7 @@ val prometheusVersion = "0.9.0"
 val doobieVersion = "0.9.0"
 
 libraryDependencies ++= Seq(
-  "com.amazonaws" % "aws-java-sdk" % "1.11.797" exclude ("commons-logging", "commons-logging"),
+  "joda-time" % "joda-time" % "2.8.1",
   "org.json4s" %% "json4s-native" % "3.6.8",
   "org.mongodb" % "mongodb-driver" % "3.12.5",
   "com.rabbitmq" % "amqp-client" % "5.9.0",
