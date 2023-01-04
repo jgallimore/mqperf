@@ -1,7 +1,0 @@
-[
-  {rabbit, [
-  {cluster_nodes, { ['rabbit@{{ rabbitmq_hosts | join('\', \'rabbit@') }}'], disc}} ,
-  {loopback_users, []}
-   ]},
-  {rabbitmq_management, [{cors_allow_origins, ["*"]}] }
-].

@@ -28,16 +28,11 @@
         </property>
     </bean>
 
-   <!-- Allows accessing the server log -->
-    <bean id="logQuery" class="io.fabric8.insight.log.log4j.Log4jLogQuery"
-          lazy-init="false" scope="singleton"
-          init-method="start" destroy-method="stop">
-    </bean>
-
     <!--
         The <broker> element is used to configure the ActiveMQ broker.
     -->
-    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="localhost" dataDirectory="${activemq.data}">
+
+    <broker xmlns="http://activemq.apache.org/schema/core" brokerName="{{hostvars[inventory_hostname].ec2_private_ip_address|replace(".", "_")}}" dataDirectory="${activemq.data}" useJmx="true" populateJMSXUserID="true">
 
         <destinationPolicy>
             <policyMap>
@@ -78,9 +73,13 @@
 
             http://activemq.apache.org/persistence.html
         -->
-        <persistenceAdapter>
-            <kahaDB directory="${activemq.data}/kahadb"/>
-        </persistenceAdapter>
+		<persistenceAdapter> 
+			<jdbcPersistenceAdapter dataSource="#mysql-ds" lockKeepAlivePeriod="5000">
+				<locker>
+                    <lease-database-locker lockAcquireSleepInterval="10000"/>
+                </locker>
+	        </jdbcPersistenceAdapter>
+		</persistenceAdapter>
 
 
           <!--
@@ -102,6 +101,18 @@
             </systemUsage>
         </systemUsage>
 
+		<sslContext>
+			<sslContext
+				keyStore="file:/opt/activemq/conf/broker.ks"
+				keyStorePassword="activemq"
+				trustStore="file:/opt/activemq/conf/broker.ks"
+				trustStorePassword="activemq" />
+		</sslContext>
+
+        <plugins>
+          <bean xmlns="http://www.springframework.org/schema/beans" class="com.tomitribe.activemq.metrics.MetricsPlugin" />
+        </plugins>
+
         <!--
             The transport connectors expose ActiveMQ over a given protocol to
             clients and other brokers. For more information, see:
@@ -110,11 +121,7 @@
         -->
         <transportConnectors>
             <!-- DOS protection, limit concurrent connections to 1000 and frame size to 100MB -->
-            <transportConnector name="openwire" uri="tcp://0.0.0.0:61616?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
-            <transportConnector name="amqp" uri="amqp://0.0.0.0:5672?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
-            <transportConnector name="stomp" uri="stomp://0.0.0.0:61613?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
-            <transportConnector name="mqtt" uri="mqtt://0.0.0.0:1883?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
-            <transportConnector name="ws" uri="ws://0.0.0.0:61614?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+            <transportConnector name="auto+ssl" uri="auto+ssl://0.0.0.0:61616?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
         </transportConnectors>
 
         <!-- destroy the spring context on shutdown to stop jetty -->
@@ -131,6 +138,18 @@
         Take a look at ${ACTIVEMQ_HOME}/conf/jetty.xml for more details
     -->
     <import resource="jetty.xml"/>
+
+    <!-- mysql db datasource configured for reconnect to ensure activemq reconnects after db outage -->
+	<!-- https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html -->
+	<bean id="mysql-ds" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="org.mariadb.jdbc.Driver"/>
+        <property name="url" value="jdbc:mariadb://{{ groups['mysql']|map('extract', hostvars, 'ec2_private_ip_address')|list|first }}/activemq?relaxAutoCommit=true&amp;autoReconnect=true&amp;initialTimeout=10&amp;maxReconnects=20"/>
+		<property name="username" value="activemq"/>
+		<property name="password" value="activemq"/>
+		<property name="poolPreparedStatements" value="true"/> 
+		<property name="fastFailValidation" value="true"/>
+  		<property name="jmxName" value="org.apache.commons.dbcp2:BasicDataSource=activemq"/>
+	</bean>
 
 </beans>
 <!-- END SNIPPET: example -->

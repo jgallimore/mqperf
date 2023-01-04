@@ -2,5 +2,7 @@ activemq_name: apache-activemq-5.15.7
 activemq_archive_name: "{{ activemq_name }}-bin.tar.gz"
 activemq_download_dest: /tmp/{{ activemq_archive_name }}
 activemq_download_url: https://archive.apache.org/dist/activemq/5.15.7/{{ activemq_archive_name }}
+mariadb_jar_url: https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/3.1.0/mariadb-java-client-3.1.0.jar
+mariadb_jar_dest: /tmp/mariadb.jar
 
 activemq_username: activemq

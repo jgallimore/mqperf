@@ -1,9 +1,0 @@
----
-- hosts: client
-  tasks:
-  - name: Stop client
-    shell: /tmp/client.sh stop
-    ignore_errors: yes
-    register: mqStatus
-
-  - debug: msg="{{mqStatus.stdout}}"

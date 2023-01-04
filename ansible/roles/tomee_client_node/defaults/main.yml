@@ -1,4 +1,0 @@
----
-tomee_client_version: "0.0.1-SNAPSHOT"
-tomee_client_artifact_path: "{{ tomee_client_sources_dir }}/target/tomee-client-{{ tomee_client_version }}.zip"
-

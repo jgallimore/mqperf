@@ -1,27 +1,11 @@
-[tag_group_Mongo]
-
 [tag_group_Receiver]
 
 [tag_group_Sender]
 
-[tag_group_Kafka]
-
 [tag_group_Prometheus]
-
-[tag_group_Rabbitmq]
 
 [tag_group_Activemq]
 
 [tag_group_Client]
 
 [tag_group_Artemis]
-
-[tag_group_Eventstore]
-
-[tag_group_Redistreams]
-
-[tag_group_Redpanda]
-
-[tag_group_Rocketmq]
-
-[tag_group_Postgres]

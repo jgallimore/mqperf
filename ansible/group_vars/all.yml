@@ -15,16 +15,7 @@ mqperf_sources_dir: "{{ playbook_dir }}/.."
 
 grafana_port: 3000
 prometheus_port: 9090
-rabbitmq_port: 15672
 activemq_port: 8161
-eventstore_port: 2113
-activemq_artemis_jolokia_port: 8161
-rocketmq_name_server_port: 9876
-rocketmq_broker_port_main: 10911
-redpanda_port: 9092
-redistreams_master_port: 6380
-redistreams_slave1_port: 6381
-redistreams_slave2_port: 6382
 
 storage_fs_type: ext4
 storage_device: /dev/nvme1n1
@@ -36,6 +27,3 @@ nats_version: v0.19.0
 activemq_build_sources_dir: "{{ playbook_dir }}/../activemq"
 activemq_build_version: "5.17.0"
 activemq_build_artifact_path: "{{ activemq_build_sources_dir }}/assembly/target/apache-activemq-{{ activemq_build_version }}-bin.tar.gz"
-
-activemq_client_sources_dir: "{{ playbook_dir }}/../idle-client"
-tomee_client_sources_dir: "{{ playbook_dir }}/../tomee-client"

@@ -1,4 +1,0 @@
----
-activemq_client_version: "0.0.1-SNAPSHOT"
-activemq_client_artifact_path: "{{ activemq_client_sources_dir }}/target/sample-client-{{ activemq_client_version }}.jar"
-

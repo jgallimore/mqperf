@@ -1,3 +1,0 @@
-rocketmq_version: 4.7.1
-rocketmq_dir:  /opt/rocketmq
-rocketmq_download_url: https://archive.apache.org/dist/rocketmq/{{ rocketmq_version }}/rocketmq-all-{{ rocketmq_version }}-bin-release.zip

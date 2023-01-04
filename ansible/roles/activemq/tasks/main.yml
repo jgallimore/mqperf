@@ -1,4 +1,29 @@
 ---
+- name: Install botocore
+  become: yes
+  pip:
+    name: botocore
+    extra_args: --ignore-installed
+
+- name: Install boto3
+  become: yes
+  pip:
+    name: boto3
+    extra_args: --ignore-installed
+
+- name: Copy ActiveMQ artifact from S3
+  aws_s3:
+    bucket: "{{ s3_bucket }}"
+    mode: get
+    object: "/jars/{{ item }}"
+    dest: "/tmp/{{ item }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access }}"
+    aws_secret_key: "{{ aws_secret }}"
+  with_items:
+    - "metrics-endpoint-0.35-SNAPSHOT.war"
+    - "metrics-plugin-0.34-SNAPSHOT-package.zip"
+
 - name: Get activemq
   get_url:
     dest: "{{ activemq_download_dest }}"
@@ -17,22 +42,76 @@
     creates: /opt/{{ activemq_name }}
     owner: "{{ activemq_username }}"
 
+- name: Unpack libs
+  unarchive:
+    copy: no
+    dest: /opt/{{ activemq_name }}/lib
+    src: "/tmp/metrics-plugin-0.34-SNAPSHOT-package.zip"
+    owner: "{{ activemq_username }}"
+
+- name: Create metrics app
+  shell: "sudo mkdir /opt/{{ activemq_name }}/webapps/metrics && sudo chown {{ activemq_username }} /opt/{{ activemq_name }}/webapps/metrics"
+
+- name: Unpack libs
+  unarchive:
+    copy: no
+    dest: /opt/{{ activemq_name }}/webapps/metrics
+    src: "/tmp/metrics-endpoint-0.35-SNAPSHOT.war"
+    owner: "{{ activemq_username }}"
+
+
 - name: Create user friendly link
   file:
     state: link
     src: /opt/{{ activemq_name }}
     dest: /opt/activemq
 
+- name: Copy keystore
+  copy:
+    src: broker.ks
+    dest: /opt/activemq/conf/broker.ks
+    owner: root
+    group: root
+    mode: "u+rwx,g+rwx,o+rx"
+
 - name: Create config file
   template:
     src: activemq.xml.j2
     dest: /opt/activemq/conf/activemq.xml
+
+- name: Update Jetty config
+  template:
+    src: jetty.xml.j2
+    dest: /opt/activemq/conf/jetty.xml
+
+- name: Update logging config
+  template:
+    src: log4j.properties.j2
+    dest: /opt/activemq/conf/log4j.properties
+
+- name: Update log4j2 config
+  template:
+    src: log4j2.properties.j2
+    dest: /opt/activemq/conf/log4j2.properties
+
+- name: Update env config
+  template:
+    src: env.j2
+    dest: /opt/activemq/bin/env
 
 - name: Configure activemq user
   lineinfile:
     regexp: "ACTIVEMQ_USER"
     line: "ACTIVEMQ_USER=\"{{ activemq_username }}\""
     path: /opt/activemq/bin/env
+
+- name: Get MariaDB jar
+  get_url:
+    dest: "{{ mariadb_jar_dest }}"
+    url: "{{ mariadb_jar_url }}"
+
+- name: Copy MariaDB jar
+  shell: "cp {{ mariadb_jar_dest }} /opt/activemq/lib/"
 
 - name: Link init script to /etc/init.d
   file:

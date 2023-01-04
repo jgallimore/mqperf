@@ -1,10 +1,9 @@
-# MqPerf
+# ActiveMQ Ansible Setup
 
-A benchmark of message queues with data replication and at-least-once delivery guarantees.
+This is a fork of the MQPerf project https://github.com/softwaremill/mqperf, which has been simplified, and is designed to make starting 
+and testing an ActiveMQ environment with a specific configuration as straightforward as possible.
 
-Source code for the mqperf article at SoftwareMill's blog: [Evaluating persistent, replicated message queues](https://softwaremill.com/mqperf)
-
-# Setting up the environment
+## Pre-requisites
 
 ### Tools
 Tests have been run with the following prerequisites:
@@ -17,7 +16,83 @@ Message queues and test servers are automatically provisioned using **Ansible** 
 `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` present in the environment for things to work properly, as well
 as Ansible and Boto installed.
 
-See [Creating AWS access key](https://aws.amazon.com/premiumsupport/knowledge-center/create-access-key/) for details.
+### AWS Bucket
+
+AWS S3 is used to distribute a number of artifacts from the machine running the Ansible scripts to the servers in EC2.
+In order to do this, a suitable S3 bucket needs to be created in S3, and its name specified in `ansible/group_vars/all.yml`:
+
+```
+s3_bucket: jrg-sml-mqperf-2022
+```
+
+# Provisioning broker nodes
+
+If your broker config makes use of a MySQL server for persistence, that should be started first:
+
+```shell
+ansible-playbook install_and_setup_mysql.yml
+```
+
+You can reference the MySQL database in the template for your ActiveMQ (which you'll need for the next step!):
+
+```xml
+  <!-- mysql db datasource configured for reconnect to ensure activemq reconnects after db outage -->
+	<!-- https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-configuration-properties.html -->
+	<bean id="mysql-ds" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="org.mariadb.jdbc.Driver"/>
+        <property name="url" value="jdbc:mariadb://{{ groups['mysql']|map('extract', hostvars, 'ec2_private_ip_address')|list|first }}/activemq?relaxAutoCommit=true&amp;autoReconnect=true&amp;initialTimeout=10&amp;maxReconnects=20"/>
+		<property name="username" value="activemq"/>
+		<property name="password" value="activemq"/>
+		<property name="poolPreparedStatements" value="true"/> 
+		<property name="fastFailValidation" value="true"/>
+  		<property name="jmxName" value="org.apache.commons.dbcp2:BasicDataSource=activemq"/>
+	</bean>
+```
+
+The provided config will, by default, start a failover setup using MySQL. Some other templates I used (e.g. a network-of-brokers config) are also provided in the `ansible/roles/activemq/templates` folder.
+Simply copy the config you want to `activemq.xml.j2`, or tweak the `activemq.xml.j2` file as needed. Some other config options you may wish to change:
+
+Heap Space: See "ACTIVEMQ_OPTS_MEMORY" in `env.j2`
+Instance type and disk space: see "ec2_instance_type" and "root_volume_size" in `ansible/group_vars/all.yml`
+Instance count: see "count" in `ansible/install_and_setup_activemq.yml`
+
+The ansible task includes configuring remote JMX access, and includes a Micrometer Plugin (https://micrometer.io/), along with a Prometheus endpoint to get stats from the broker.
+
+The Micrometer plugin needs to have the jar and webapp installed in the broker, and configured with the following in activemq.xml.j2:
+
+```xml
+  <plugins>
+    <bean xmlns="http://www.springframework.org/schema/beans" class="com.tomitribe.activemq.metrics.MetricsPlugin" />
+  </plugins>
+```
+
+and this config in jetty.xml.j2:
+
+```xml
+                                <bean class="org.eclipse.jetty.webapp.WebAppContext">
+                                        <property name="contextPath" value="/metrics" />
+                                        <property name="resourceBase" value="${activemq.home}/webapps/metrics" />
+                                        <property name="logUrlOnStart" value="true" />
+                                </bean>
+```
+
+Ensure the `securityConstraintMapping` is *not* set for `/`:
+
+```xml
+    <bean id="securityConstraintMapping" class="org.eclipse.jetty.security.ConstraintMapping">
+        <property name="constraint" ref="securityConstraint" />
+        <property name="pathSpec" value="/admin/*,/api/*,*.jsp,*.html,*.js,*.css,*.png,*.gif,*.ico" />
+    </bean>
+```
+
+The broker(s) can be started with the following Ansible command:
+
+```shell
+ansible-playbook install_and_setup_activemq.yml
+```
+
+At this point, you can connect to the brokers you have started, and interact with them manually, or you can follow the
+steps below to send/receive messages through the broker(s).
 
 # Message generation notes
 * By default, each message has length of 100 characters (this is configurable)
@@ -37,14 +112,6 @@ that may influence the test execution and its results.
 # Running tests
 *Note: all commands should be run in the `ansible` directory*
 
-### Provision broker nodes with relevant script
-```shell
-ansible-playbook install_and_setup_YourQueueName.yml
-```
-*Note: since **AWS SQS** is a serverless offering, you don't need to setup anything for it. For SQS, you can skip this step.*
-
-*Note: you can select EC2 instance type for your tests by setting `ec2_instance_type` in the `group_vars/all.yml` file*
- 
 ### Provision sender and receiver nodes
 ```shell
 ansible-playbook provision_mqperf_nodes.yml
@@ -112,83 +179,3 @@ ansible-playbook sender_only.yml
 ansible-playbook receiver_only.yml
 ```
 
-# Implementation-specific notes
-
-## Kafka
-Before running the tests, create the Kafka topics by running `ansible-playbook kafka_create_topic.yml`
-
-## Redpanda [vectorized.io]
-Redpanda requires xfs filesystem, to configure it update `storage_fs_type: xfs` in `all.yml` file.
-Before running the tests, create the Redpanda topics by running `ansible-playbook redpanda_create_topic.yml`.
-Default partition number in a topic creation script is 64, if you need to adjust it update `--partitions 64` param in `redpanda_create_topic.yml` script.
-
-##Redis Streams
-Before running the tests, create the required streams and consumer groups by running `ansible-playbook redistreams_create_streams.yml`.
-This script creates streams named stream0, stream1... stream100. If you need more streams please edit the loop counter.
-
-If you'd like to rerun tests without cluster redeployment use `ansible-playbook redistreams_trim_streams.yml` to flush the streams.
-To manipulate streams count use streamCount property in test JSON.
-Notes. Cluster create command (last step) sometimes fails randomly. It's sometimes easier to run it directly from ec2.
-
-## Pulsar
-The ack property is set on the Bookkeeper level via the CLI or REST or a startup parameter. 
-[Go to the docs](https://pulsar.apache.org/docs/en/administration-zk-bk/#bookkeeper-persistence-policies) for more details.
-Currently, this is not implemented, hence the `mq.ack` attribute is ignored.
-
-## RabbitMQ
-* when installing Rabbit MQ, you need to specify the Erlang cookie, e.g.: 
-`ansible-playbook install_and_setup_rabbitmq.yml -e erlang_cookie=1234`
-* management console is available on port 15672 (`guest`/`guest`)     
-* if you'd like to SSH to the broker servers the user is `centos`
-* queues starting with `ha.` will be mirrored
-
-## ActiveMQ
-* management console is available on port 8161 (`admin`/`admin`)
-
-## ActiveMQ Artemis
-* note that for the client code, we are using the same one as for ActiveMQ (`ActiveMq.scala`)
-* there is no dedicated management console for ActiveMQ Artemis, however monitoring is possible via exposed [Jolokia](https://jolokia.org/) web app. Jolokia web application is deployed along ActiveMQ Artemis by default. To view broker's data:
-    * Navigate to: `http://<AWS_EC2_PUBLIC_IP>:8161/jolokia/list` - plain JSON content should be visible - to verify if it works.
-    * To view instance's state navigate to e.g.: `http://<AWS_EC2_PUBLIC_IP>:8161/jolokia/read/org.apache.activemq.artemis:address="mq",broker="<BROKER_NAME>",component=addresses`, where: `org.apache.activemq.artemis:address="mq",broker="<BROKER_NAME>",component=addresses` is the key (`"` signs are obligatory). To know other keys refer to the previous step. 
-    * `<BROKER_NAME>` typically resolves to AWS_EC2_PRIVATE_IP with `.` replaced with `_`.
-* configuration changes: bumped Xmx, bumped global-max-size    
-    
-## EventStore
-* configuration changes: see the `EventStoreMq` implementation
-
-## Oracle AQ support
-* to build the oracleaq module, first install the required dependencies available in your Oracle DB installation
-    * aqapi.jar (oracle/product/11.2.0/dbhome_1/rdbms/jlib/aqapi.jar)
-    * ojdbc6.jar (oracle/product/11.2.0/dbhome_1/jdbc/lib/ojdbc6.jar)
-
-* to install a dependency in your local repository, create a build.sbt file:
-```
-organization := "com.oracle"
-name := "ojdbc6"
-version := "1.0.0"
-scalaVersion := "2.11.6"
-packageBin in Compile := file(s"${name.value}.jar")
-```
-Now you can publish the file. It should be available in ~/.ivy2/local/com.oracle/
-```sh
-$ sbt publishLocal
-```
-
-# Ansible notes
-Zookeeper installation contains an ugly workaround for a bug in Cloudera's RPM repositories 
-(http://community.cloudera.com/t5/Cloudera-Manager-Installation/cloudera-manager-installer-fails-on-centos-7-3-vanilla/td-p/55086/highlight/true).
-See `ansible/roles/zookeeper/tasks/main.yml`. This should be removed in the future when the bug is fixed by Cloudera.
-
-# FAQ
-- I'm getting: *skipping: no hosts matched*, why? Probably you are running ansible from project root.
-  Instead `cd` to `ansible/` (where `ansible.cfg` is located) and try to run playbook from this location.
-
-# Local test
-To run locally execute the Sender and Receiver classes with following:
-- parameters:
-
-`-Dconfig.file=/tmp/test-config.json`
-
-- environment variables:
-
-`RUN_ID=1;HOST_ID=1`
